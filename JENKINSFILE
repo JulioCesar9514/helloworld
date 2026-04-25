@@ -8,6 +8,13 @@ pipeline {
                     url: 'https://github.com/JulioCesar9514/helloworld.git'
             }
         }
+        stage('Hello World') {
+            steps {
+                echo 'Hello World'
+                bat 'dir'
+                bat 'echo Hola'
+            }
+        }
 
         stage('Instalar dependencias') {
             steps {
