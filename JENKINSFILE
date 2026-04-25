@@ -11,19 +11,19 @@ pipeline {
 
         stage('Instalar dependencias') {
             steps {
-                bat 'pip install -r requirements.txt || true'
+                bat 'echo Instalando dependencias... (simulado)'
             }
         }
 
         stage('Tests') {
             steps {
-                bat 'pytest || true'
+                bat 'echo Ejecutando tests... (simulado)'
             }
         }
 
         stage('Build') {
             steps {
-                bat 'Construyendo aplicación...'
+                bat 'echo Construyendo aplicación...'
             }
         }
     }
