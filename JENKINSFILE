@@ -13,6 +13,7 @@ pipeline {
                 echo 'Hello World'
                 bat 'dir'
                 bat 'echo Hola'
+                echo 'Cambio vsc main to master '
             }
         }
 
