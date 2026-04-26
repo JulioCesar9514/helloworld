@@ -1,61 +1,56 @@
 pipeline {
     agent any
 
-    stages {
-
-        stage('Checkout') {
+     stages {
+        stage('Get Code') {
             steps {
-                git branch: 'master',
-                    url: 'https://github.com/JulioCesar9514/helloworld.git'
+                // Obtener código del repo
+                git 'https://github.com/JulioCesar9514/helloworld.git'
             }
         }
 
-        stage('Build') {
-            steps {
-                echo 'Proyecto Python: no hay compilación'
-                echo WORKSPACE
-                bat 'dir'
-            }
+    stage('Build') {
+        steps {
+            echo 'Eyyyy, esto es Python. No hay que compilar nada!!!'
+	    echo WORKSPACE
+	    bat 'dir'
         }
+    }
 
-        stage('Tests') {
-            parallel {
+    stage('Tests')
+    {
+        parallel {
 
-                stage('Unit') {
-                    steps {
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            bat '''
-                                set PYTHONPATH=%WORKSPACE%\\helloworld
-                                pytest --junitxml=result-unit.xml helloworld\\test\\unit
-                            '''
-                        }
-                    }
-                }
-
-                stage('Rest') {
-                    steps {
+            stage('Unit') {
+                steps {
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         bat '''
-                            cd helloworld
-                            set FLASK_APP=app
-                            set FLASK_ENV=development
-                            start /B flask run
-
-                            start /B java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
-
-                            timeout /T 3
-
-                            set PYTHONPATH=%WORKSPACE%\\helloworld
-                            pytest --junitxml=result-rest.xml test\\rest
+                                set PYTHONPATH=%WORKSPACE%
+                                pytest --junitxml=result-unit.xml test\\unit
                         '''
                     }
                 }
             }
-        }
-
-        stage('Results') {
-            steps {
-                junit 'result*.xml'
-            }
+            
+            stage('Rest') {
+                steps {
+                    bat '''
+                        set FLASK_APP=app\\api.py
+                        set FLASK_ENV=development
+                        start flask run                        
+                        start java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir C:\\UnirPracticas\\CP1\\helloworldtest\\wiremock
+                        set PYTHONPATH=%WORKSPACE%
+                        pytest --junitxml=result-rest.xml test\\rest
+                    '''
+                }    
+            }    
         }
     }
+    
+    stage ('Results') {
+        steps {
+            junit 'result*.xml'
+        }
+    }
+  }
 }
