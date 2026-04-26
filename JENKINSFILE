@@ -2,36 +2,59 @@ pipeline {
     agent any
 
     stages {
+
         stage('Checkout') {
             steps {
                 git branch: 'master',
                     url: 'https://github.com/JulioCesar9514/helloworld.git'
             }
         }
-        stage('Hello World') {
-            steps {
-                echo 'Hello World'
-                bat 'dir'
-                bat 'echo Hola'
-                echo 'Cambio vsc main to master '
-            }
-        }
 
-        stage('Instalar dependencias') {
+        stage('Build') {
             steps {
-                bat 'echo Instalando dependencias... (simulado)'
+                echo 'Proyecto Python: no hay compilación'
+                echo WORKSPACE
+                bat 'dir'
             }
         }
 
         stage('Tests') {
-            steps {
-                bat 'echo Ejecutando tests... (simulado)'
+            parallel {
+
+                stage('Unit') {
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            bat '''
+                                set PYTHONPATH=%WORKSPACE%\\helloworld
+                                pytest --junitxml=result-unit.xml helloworld\\test\\unit
+                            '''
+                        }
+                    }
+                }
+
+                stage('Rest') {
+                    steps {
+                        bat '''
+                            cd helloworld
+                            set FLASK_APP=app
+                            set FLASK_ENV=development
+                            start /B flask run
+
+                            start /B java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+
+                            timeout /T 3
+
+                            set PYTHONPATH=%WORKSPACE%\\helloworld
+                            pytest --junitxml=result-rest.xml test\\rest
+                        '''
+                    }
+                }
             }
         }
 
-        stage('Build') {
+        stage('Results') {
             steps {
-                bat 'echo Construyendo aplicación...'
+                junit 'result*.xml'
             }
         }
     }
