@@ -24,11 +24,13 @@ pipeline {
             stage('Unit') {
                 steps {
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        bat '''
-                                set PYTHONPATH=%WORKSPACE%
-                                python -m pytest --junitxml=result-unit.xml test\\unit
+                        dir('helloworld') {
+                            bat '''
+                                    set PYTHONPATH=%WORKSPACE%\\helloworld
+                                    python -m pytest --junitxml=result-unit.xml test\\unit
 
-                        '''
+                            '''
+                        }
                     }
                 }
             }
@@ -39,10 +41,10 @@ pipeline {
                         bat '''
                             set FLASK_APP=app\\api.py
                             set FLASK_ENV=development
-                            start /B flask run                        
+                            start /B python -m flask run                        
                             start /B java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
                             timeout /T 3
-                            set PYTHONPATH=%WORKSPACE%
+                            set PYTHONPATH=%WORKSPACE%\\helloworld
                             python -m pytest --junitxml=result-rest.xml test\\rest
                         '''
                     }
