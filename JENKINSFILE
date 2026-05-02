@@ -1,7 +1,7 @@
 pipeline {
     agent any
 
-     stages {
+    stages {
         stage('Get Code') {
             steps {
                 // Obtener código del repo
@@ -9,50 +9,58 @@ pipeline {
             }
         }
 
-    stage('Build') {
-        steps {
-            echo 'Eyyyy, esto es Python. No hay que compilar nada!!!'
-	    echo WORKSPACE
-	    bat 'dir'
+        stage('Build') {
+            steps {
+                echo 'Eyyyy, esto es Python. No hay que compilar nada!!!'
+                echo WORKSPACE
+                bat 'dir'
+            }
         }
-    }
 
-    stage('Tests')
+        stage('Tests')
     {
-        parallel {
-
-            stage('Unit') {
-                steps {
-                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {                        
+            parallel {
+                stage('Unit') {
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             bat '''
                                     set PYTHONPATH=%WORKSPACE%
-                                    python -m pytest --junitxml=result-unit.xml test\\unit
+                                    REM python -m pytest --junitxml=result-unit.xml test\\unit
+                                    python -m pytest --cov=app --cov-report=xml --junitxml=result-unit.xml test\\unit
 
                             '''
+                        }
                     }
                 }
-            }
-            
-            stage('Rest') {
-                steps {
+
+                stage('Rest') {
+                    steps {
                         bat '''
                             set FLASK_APP=app\\api.py
                             set FLASK_ENV=development
-                            start /B python -m flask run                        
+                            start /B python -m flask run
                             start /B java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
                             timeout /T 3
                             set PYTHONPATH=%WORKSPACE%
-                            python -m pytest --junitxml=result-rest.xml test\\rest
+                            :: python -m pytest --junitxml=result-rest.xml test\\rest
+                            python -m pytest --cov=app --cov-report=xml --junitxml=result-rest.xml test\\rest
+
                         '''
-                }    
-            }    
-        }
+                    }
+                }
+            }
     }
-    
-    stage ('Results') {
+
+   /* stage ('Results') {
         steps {
             junit 'result*.xml'
         }
+    }*/
+        stage('Results') {
+            steps {
+                junit 'result*.xml'
+                cobertura coberturaReportFile: 'coverage.xml'
+            }
+        }
     }
-  }
 }
