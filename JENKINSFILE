@@ -1,4 +1,7 @@
 pipeline {
+    options {
+        skipDefaultCheckout(true)
+    }
     agent none   // Cambio any por none para poder asignar agentes por stage
 
     stages {
