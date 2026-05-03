@@ -37,6 +37,7 @@ pipeline {
                         git 'Git-Linux'   // Configuración de la herramienta Git para Linux
                     }
                     steps {
+                        checkout scm  // Asegura que el código esté disponible en este agente
                         echo 'UNIT TESTS'
                         sh 'whoami'
                         sh 'hostname'
