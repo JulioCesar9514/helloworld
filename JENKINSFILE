@@ -8,6 +8,9 @@ pipeline {
 
         stage('Get Code') {
             agent { label 'built-in' }   // AGENTE Built-In Node (localhost)
+            tools {
+                git 'Git-windows'   // Configuración de la herramienta Git para el agente windows
+            }
             steps {
                 echo 'GET CODE'
                 bat 'whoami'
