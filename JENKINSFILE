@@ -7,7 +7,7 @@ pipeline {
     stages {
 
         stage('Get Code') {
-            agent { label 'built-in' }   // AGENTE Built-In Node (localhost)
+            agent { label 'windows-agent' }   // AGENTE Built-In Node (localhost)
             tools {
                 git 'Git-Windows'   // Configuración de la herramienta Git para el agente windows
             }
