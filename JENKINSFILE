@@ -5,7 +5,6 @@ pipeline {
     agent none   // Cambio any por none para poder asignar agentes por stage
 
     stages {
-
         stage('Get Code') {
             agent { label 'windows-agent' }   // AGENTE Built-In Node (localhost)
             tools {
@@ -37,27 +36,26 @@ pipeline {
         }
 
         stage('Tests') {
-            agent { label 'linux-agent' }   // AGENTE Linux VM remota
+            agent { label 'linux-agent' }
             tools {
                 git 'Git-Linux'
             }
             steps {
-                git branch: 'master',
-                    credentialsId: 'c7c18541-231c-4d4d-ab7a-bb0e534c7019',
-                    url: 'https://github.com/JulioCesar9514/helloworld.git'
+                git(
+            branch: 'master',
+            credentialsId: 'c7c18541-231c-4d4d-ab7a-bb0e534c7019',
+            url: 'https://github.com/JulioCesar9514/helloworld.git'
+        )
+
                 echo 'ANALISIS ESTATICO'
 
-                // Flake8
                 sh '''
-                    flake8 app --format=xml --output-file=flake8-report.xml || true
-                '''
+            flake8 app --format=xml --output-file=flake8-report.xml || true
+        '''
 
-                // Bandit
                 sh '''
-                    bandit -r app -f xml -o bandit-report.xml || true
-                '''
-
-                // Warnings NG recogerá los XML generados
+            bandit -r app -f xml -o bandit-report.xml || true
+        '''
             }
         }
 
