@@ -53,9 +53,9 @@ pipeline {
                 }
 
                 stage('Rest') {
-                    agent { label 'windows-agent' }  // AGENTE Windows VM remota
+                    agent { label 'windows-agent' }
                     tools {
-                        git 'Git-Windows'   // Configuración de la herramienta Git para Windows
+                        git 'Git-Windows'
                     }
                     steps {
                         echo 'REST TESTS'
@@ -66,11 +66,23 @@ pipeline {
                         bat '''
                             set FLASK_APP=app\\api.py
                             set FLASK_ENV=development
-                            start /B python -m flask run
-                            start /B java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
-                            timeout /T 3
+
+                            rem --- Lanzar Flask en background ---
+                            start "" /B python -m flask run --port=5001
+
+                            rem --- Lanzar Wiremock en background ---
+                            start "" /B java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+
+                            rem --- Esperar a que arranquen ---
+                            timeout /T 5
+
+                            rem --- Ejecutar tests REST ---
                             set PYTHONPATH=%WORKSPACE%
                             python -m pytest --cov=app --cov-report=xml --junitxml=result-rest.xml test\\rest
+
+                            rem --- Matar Flask y Wiremock ---
+                            taskkill /IM python.exe /F
+                            taskkill /IM java.exe /F
                         '''
                     }
                 }
