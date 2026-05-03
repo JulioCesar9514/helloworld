@@ -7,7 +7,7 @@ pipeline {
     stages {
 
         stage('Get Code') {
-            agent { label 'master' }   // AGENTE Built-In Node (localhost)
+            agent { label '' }   // AGENTE Built-In Node (localhost)
             steps {
                 echo 'GET CODE'
                 bat 'whoami'
