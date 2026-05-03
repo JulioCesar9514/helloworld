@@ -52,7 +52,7 @@ pipeline {
                 }
 
                 stage('Rest') {
-                    agent { label 'windows' }  // AGENTE Windows VM remota
+                    agent { label 'windows-agent' }  // AGENTE Windows VM remota
                     tools {
                         git 'Git-Windows'   // Configuración de la herramienta Git para Windows
                     }
