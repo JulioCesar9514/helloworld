@@ -28,12 +28,12 @@ pipeline {
             }
         }
 
-        stage('Publish Coverage') {
+        /*stage('Publish Coverage') {
             steps {
                 echo 'PUBLISHING COVERAGE RESULTS'
 
                 cobertura coberturaReportFile: 'coverage.xml'
             }
-        }
+        }*/
     }
 }
