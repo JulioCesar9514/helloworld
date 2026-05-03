@@ -1,91 +1,35 @@
 pipeline {
-    options {
-        skipDefaultCheckout(true)
-    }
-    agent none   // Cambio any por none para poder asignar agentes por stage
+    agent { label 'windows-agent' }
 
     stages {
-        stage('Get Code') {
-            agent { label 'windows-agent' }   // AGENTE Built-In Node (localhost)
-            tools {
-                git 'Git-Windows'   // Configuración de la herramienta Git para el agente windows
-            }
+
+        stage('Prepare') {
             steps {
-                echo 'GET CODE'
+                echo 'PREPARING ENVIRONMENT'
                 bat 'whoami'
                 bat 'hostname'
                 echo WORKSPACE
 
-                git 'https://github.com/JulioCesar9514/helloworld.git'
+                bat 'pip install --upgrade pip'
+                bat 'pip install -r requirements.txt'
             }
         }
 
-        stage('Build') {
-            agent { label 'windows-agent' }    // AGENTE Windows VM remota
-            tools {
-                git 'Git-Windows'   // Configuración de la herramienta Git para Windows
-            }
+        stage('Run Tests with Coverage') {
             steps {
-                echo 'BUILD'
-                bat 'whoami'
-                bat 'hostname'
-                echo WORKSPACE
-                echo 'Hola, no hay que compilar nada!!!'
-                bat 'dir'
-            }
-        }
+                echo 'RUNNING TESTS WITH COVERAGE'
 
-        stage('Tests') {
-            agent { label 'linux-agent' }
-            tools {
-                git 'Git-Linux'
-            }
-            steps {
-                git(
-            branch: 'master',
-            credentialsId: 'c7c18541-231c-4d4d-ab7a-bb0e534c7019',
-            url: 'https://github.com/JulioCesar9514/helloworld.git'
-        )
-
-                echo 'ANALISIS ESTATICO'
-
-                sh '''
-            flake8 app --format=xml --output-file=flake8-report.xml || true
-        '''
-
-                sh '''
-            bandit -r app -f xml -o bandit-report.xml || true
-        '''
-            }
-        }
-
-        stage('Performance') {
-            agent { label 'linux-agent' }
-            steps {
-                echo 'PERFORMANCE TESTS'
-
-                sh '''
-                    jmeter -n -t test/performance/test-plan.jmx -l performance.jtl -e -o report
+                bat '''
+                    pytest --cov=app --cov-branch --cov-report=term --cov-report=xml
                 '''
-
-                perfReport errorFailedThreshold: 0, errorUnstableThreshold: 0, sourceDataFiles: 'performance.jtl'
             }
         }
 
-        stage('Results') {
-            agent { label 'built-in' }   // AGENTE built-in Node (localhost)
+        stage('Publish Coverage') {
             steps {
-                echo 'RESULTADOS'
-                bat 'whoami'
-                bat 'hostname'
-                echo WORKSPACE
+                echo 'PUBLISHING COVERAGE RESULTS'
 
-                recordIssues tools: [
-                    flake8(pattern: 'flake8-report.xml'),
-                    bandit(pattern: 'bandit-report.xml')
-                ]
-
-                perfReport errorFailedThreshold: 0, errorUnstableThreshold: 0, sourceDataFiles: 'performance.jtl'
+                cobertura coberturaReportFile: 'coverage.xml'
             }
         }
     }
