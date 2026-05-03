@@ -2,11 +2,10 @@ pipeline {
     agent none   // Cambio any por none para poder asignar agentes por stage
 
     stages {
-
         stage('Get Code') {
             agent { label 'built-in' }   // AGENTE Built-In Node (localhost)
             steps {
-                echo "GET CODE"
+                echo 'GET CODE'
                 bat 'whoami'
                 bat 'hostname'
                 echo WORKSPACE
@@ -16,13 +15,15 @@ pipeline {
         }
 
         stage('Build') {
-            agent { label 'windows' }    // AGENTE Windows VM remota
+            agent { label 'windows-agent' }    // AGENTE Windows VM remota
+            tools {
+                git 'Git-Windows'   // Configuración de la herramienta Git para Windows
+            }
             steps {
-                echo "BUILD"
+                echo 'BUILD'
                 bat 'whoami'
                 bat 'hostname'
                 echo WORKSPACE
-
                 echo 'Hola, no hay que compilar nada!!!'
                 bat 'dir'
             }
@@ -30,11 +31,13 @@ pipeline {
 
         stage('Tests') {
             parallel {
-
                 stage('Unit') {
-                    agent { label 'linux' }   // AGENTE Linux VM remota
+                    agent { label 'linux-agent' }   // AGENTE Linux VM remota
+                    tools {
+                        git 'Git-Linux'   // Configuración de la herramienta Git para Linux
+                    }
                     steps {
-                        echo "UNIT TESTS"
+                        echo 'UNIT TESTS'
                         sh 'whoami'
                         sh 'hostname'
                         sh 'echo $WORKSPACE'
@@ -50,8 +53,11 @@ pipeline {
 
                 stage('Rest') {
                     agent { label 'windows' }  // AGENTE Windows VM remota
+                    tools {
+                        git 'Git-Windows'   // Configuración de la herramienta Git para Windows
+                    }
                     steps {
-                        echo "REST TESTS"
+                        echo 'REST TESTS'
                         bat 'whoami'
                         bat 'hostname'
                         echo WORKSPACE
@@ -73,7 +79,7 @@ pipeline {
         stage('Results') {
             agent { label 'built-in' }   // AGENTE built-in Node (localhost)
             steps {
-                echo "RESULTADOS"
+                echo 'RESULTADOS'
                 bat 'whoami'
                 bat 'hostname'
                 echo WORKSPACE
