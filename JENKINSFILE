@@ -2,7 +2,6 @@ pipeline {
     agent { label 'windows-agent' }
 
     stages {
-
         stage('Prepare') {
             steps {
                 echo 'PREPARING ENVIRONMENT'
@@ -35,5 +34,11 @@ pipeline {
                 cobertura coberturaReportFile: 'coverage.xml'
             }
         }*/
+        stage('Publish Coverage') {
+            steps {
+                echo 'PUBLISHING COVERAGE RESULTS'
+                publishCoverage adapters: [coberturaAdapter('coverage.xml')]
+            }
+        }
     }
 }
