@@ -42,7 +42,9 @@ pipeline {
                 git 'Git-Linux'
             }
             steps {
-                checkout scm
+                git branch: 'master',
+                    credentialsId: 'c7c18541-231c-4d4d-ab7a-bb0e534c7019',
+                    url: 'https://github.com/JulioCesar9514/helloworld.git'
                 echo 'ANALISIS ESTATICO'
 
                 // Flake8
