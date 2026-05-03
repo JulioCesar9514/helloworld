@@ -5,6 +5,7 @@ pipeline {
     agent none   // Cambio any por none para poder asignar agentes por stage
 
     stages {
+
         stage('Get Code') {
             agent { label 'built-in' }   // AGENTE Built-In Node (localhost)
             steps {
@@ -20,7 +21,7 @@ pipeline {
         stage('Build') {
             agent { label 'windows-agent' }    // AGENTE Windows VM remota
             tools {
-                git 'Git-Windows'   // Configuración de la herramienta Git para Windows
+                git 'Git-Windows'
             }
             steps {
                 echo 'BUILD'
@@ -34,66 +35,71 @@ pipeline {
 
         stage('Tests') {
             parallel {
-                stage('Unit') {
-                    agent { label 'linux-agent' }   // AGENTE Linux VM remota
-                    tools {
-                        git 'Git-Linux'   // Configuración de la herramienta Git para Linux
-                    }
-                    steps {
-                        checkout scm  // Asegura que el código esté disponible en este agente
-                        echo 'UNIT TESTS'
-                        sh 'whoami'
-                        sh 'hostname'
-                        sh 'echo $WORKSPACE'
 
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            sh '''
-                                export PYTHONPATH=$WORKSPACE
-                                python3 -m pytest --cov=app --cov-report=xml --junitxml=result-unit.xml test/unit
-                            '''
+                Unit: {
+                    stage('Unit') {
+                        agent { label 'linux-agent' }
+                        tools {
+                            git 'Git-Linux'
+                        }
+                        steps {
+                            checkout scm
+                            echo 'UNIT TESTS'
+                            sh 'whoami'
+                            sh 'hostname'
+                            sh 'echo $WORKSPACE'
+
+                            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                                sh '''
+                                    export PYTHONPATH=$WORKSPACE
+                                    python3 -m pytest --cov=app --cov-report=xml --junitxml=result-unit.xml test/unit
+                                '''
+                            }
                         }
                     }
                 }
 
-                stage('Rest') {
-                    agent { label 'windows-agent' }
-                    tools {
-                        git 'Git-Windows'
-                    }
-                    steps {
-                        echo 'REST TESTS'
-                        bat 'whoami'
-                        bat 'hostname'
-                        echo WORKSPACE
+                Rest: {
+                    stage('Rest') {
+                        agent { label 'windows-agent' }
+                        tools {
+                            git 'Git-Windows'
+                        }
+                        steps {
+                            echo 'REST TESTS'
+                            bat 'whoami'
+                            bat 'hostname'
+                            echo WORKSPACE
 
-                        bat '''
-                            set FLASK_APP=app\\api.py
-                            set FLASK_ENV=development
+                            bat '''
+                                set FLASK_APP=app\\api.py
+                                set FLASK_ENV=development
 
-                            rem --- Lanzar Flask en background ---
-                            start "" /B python -m flask run --port=5001
+                                rem --- Lanzar Flask en background ---
+                                start "" /B python -m flask run --port=5001
 
-                            rem --- Lanzar Wiremock en background ---
-                            start "" /B java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+                                rem --- Lanzar Wiremock en background ---
+                                start "" /B java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
 
-                            rem --- Esperar a que arranquen ---
-                            timeout /T 5
+                                rem --- Esperar a que arranquen ---
+                                timeout /T 5
 
-                            rem --- Ejecutar tests REST ---
-                            set PYTHONPATH=%WORKSPACE%
-                            python -m pytest --cov=app --cov-report=xml --junitxml=result-rest.xml test\\rest
+                                rem --- Ejecutar tests REST ---
+                                set PYTHONPATH=%WORKSPACE%
+                                python -m pytest --cov=app --cov-report=xml --junitxml=result-rest.xml test\\rest
 
-                            rem --- Matar Flask y Wiremock ---
-                            taskkill /IM python.exe /F
-                            taskkill /IM java.exe /F
-                        '''
+                                rem --- Matar Flask y Wiremock ---
+                                taskkill /IM python.exe /F
+                                taskkill /IM java.exe /F
+                            '''
+                        }
                     }
                 }
             }
         }
 
         stage('Results') {
-            agent { label 'built-in' }   // AGENTE built-in Node (localhost)
+            agent { label 'built-in' }
             steps {
                 echo 'RESULTADOS'
                 bat 'whoami'
