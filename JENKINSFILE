@@ -1,40 +1,61 @@
 pipeline {
-    agent any
+    agent none   // Cambio any por none para poder asignar agentes por stage
 
     stages {
+
         stage('Get Code') {
+            agent { label 'built-in' }   // AGENTE Built-In Node (localhost)
             steps {
-                // Obtener código del repo
+                echo "GET CODE"
+                bat 'whoami'
+                bat 'hostname'
+                echo WORKSPACE
+
                 git 'https://github.com/JulioCesar9514/helloworld.git'
             }
         }
 
         stage('Build') {
+            agent { label 'windows' }    // AGENTE Windows VM remota
             steps {
-                echo 'Eyyyy, esto es Python. No hay que compilar nada!!!'
+                echo "BUILD"
+                bat 'whoami'
+                bat 'hostname'
                 echo WORKSPACE
+
+                echo 'Hola, no hay que compilar nada!!!'
                 bat 'dir'
             }
         }
 
-        stage('Tests')
-    {
+        stage('Tests') {
             parallel {
-                stage('Unit') {
-                    steps {
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            bat '''
-                                    set PYTHONPATH=%WORKSPACE%
-                                    REM python -m pytest --junitxml=result-unit.xml test\\unit
-                                    python -m pytest --cov=app --cov-report=xml --junitxml=result-unit.xml test\\unit
 
+                stage('Unit') {
+                    agent { label 'linux' }   // AGENTE Linux VM remota
+                    steps {
+                        echo "UNIT TESTS"
+                        sh 'whoami'
+                        sh 'hostname'
+                        sh 'echo $WORKSPACE'
+
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            sh '''
+                                export PYTHONPATH=$WORKSPACE
+                                python3 -m pytest --cov=app --cov-report=xml --junitxml=result-unit.xml test/unit
                             '''
                         }
                     }
                 }
 
                 stage('Rest') {
+                    agent { label 'windows' }  // AGENTE Windows VM remota
                     steps {
+                        echo "REST TESTS"
+                        bat 'whoami'
+                        bat 'hostname'
+                        echo WORKSPACE
+
                         bat '''
                             set FLASK_APP=app\\api.py
                             set FLASK_ENV=development
@@ -42,22 +63,21 @@ pipeline {
                             start /B java -jar C:\\UnirPracticas\\CP1\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
                             timeout /T 3
                             set PYTHONPATH=%WORKSPACE%
-                            :: python -m pytest --junitxml=result-rest.xml test\\rest
                             python -m pytest --cov=app --cov-report=xml --junitxml=result-rest.xml test\\rest
-
                         '''
                     }
                 }
             }
-    }
-
-   /* stage ('Results') {
-        steps {
-            junit 'result*.xml'
         }
-    }*/
+
         stage('Results') {
+            agent { label 'built-in' }   // AGENTE built-in Node (localhost)
             steps {
+                echo "RESULTADOS"
+                bat 'whoami'
+                bat 'hostname'
+                echo WORKSPACE
+
                 junit 'result*.xml'
                 cobertura coberturaReportFile: 'coverage.xml'
             }
